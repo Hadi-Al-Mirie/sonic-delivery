@@ -12,9 +12,22 @@ class FavoriteController extends Controller
     {
         try {
             $user = Auth::user();
-            $favorites = $user->favorites()->get();
+            $favorites = Favorite::where('user_id', $user->id)->with('product')->get();
+            $formFav = $favorites->map(function ($favorite) {
+                return [
+                    'favorite_id' => $favorite->id,
+                    'user_id' => $favorite->user_id,
+                    'product' => [
+                        'id' => $favorite->product->id,
+                        'name' => $favorite->product->name,
+                        'price' => $favorite->product->price,
+                        'image' => $favorite->product->image,
+                        'stock' => $favorite->product->stock,
+                    ],
+                ];
+            });
             return response()->json([
-                'favorites' => $favorites,
+                'favorites' => $formFav,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -42,7 +55,11 @@ class FavoriteController extends Controller
                 'product_id' => $product->id,
             ]);
             return response()->json([
-                'new favorite' => $new_fav
+                'favorite' => [
+                    "id" => $new_fav->id,
+                    "user_id" => $user->id,
+                    "product_id" => $product->id,
+                ]
             ], 201);
         } catch (ModelNotFoundException $e) {
             return response()->json([

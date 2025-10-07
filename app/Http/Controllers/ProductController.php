@@ -28,11 +28,11 @@ class ProductController extends Controller
         try {
             $products = Product::all();
             return response()->json([
-                'stores' => $products,
+                'Products' => $products,
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
-                'error' => 'Store not found',
+                'error' => 'Products not found',
             ], 404);
         } catch (\Exception $e) {
             return response()->json([

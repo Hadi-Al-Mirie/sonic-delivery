@@ -4,16 +4,18 @@ namespace App\Http\Controllers;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Order;
 use App\Models\OrderItem;
-use Auth;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use App\Models\Cart;
+use App\Models\User;
+
 class OrderController extends Controller
 {
     public function getOrders()
     {
         try {
-            $user = Auth::user();
+            $user = User::findOrFail(Auth::user()->id);
             return response()->json([
                 'orders' => $user->orders()->get()
             ], 200);
@@ -32,8 +34,26 @@ class OrderController extends Controller
     {
         try {
             $order = Order::findOrFail($id);
+            $items = OrderItem::where('order_id', $order->id)->with('product')->get();
+            $formItems = $items->map(function ($items) {
+                return [
+                    'product_id' => $items->product_id,
+                    'quantity' => $items->quantity,
+                    'price' => $items->price,
+                    'description' => $items->product->name,
+                    'image' => $items->product->image,
+                    'store_id' => $items->product->store_id
+                ];
+            });
             return response()->json([
-                'order items' => $order->items()->with('product')->get()
+                'order' => [
+                    "order_id" => $order->id,
+                    "total price" => $order->total_price,
+                    "status" => $order->status,
+                    "items" => [
+                        $formItems
+                    ]
+                ]
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -42,50 +62,56 @@ class OrderController extends Controller
             ], 500);
         }
     }
-    public function addOrder(Request $request)
+    public function addOrder()
     {
         try {
-            $validated = $request->validate([
-                'products' => 'required|array|min:1',
-                'products.*.id' => 'required|integer|exists:products,id',
-                'products.*.quantity' => 'required|integer|min:1',
-            ]);
-            $req_products = $validated['products'];
-            $user = Auth::user();
-            $order = DB::transaction(function () use ($req_products, $user) {
+            $user = User::findOrFail(Auth::user()->id);
+            if (!$user->location) {
+                return response()->json([
+                    'message' => 'Your Location field is empty, please fill your loacation and try again later',
+                ], 400);
+            }
+            $carts = Cart::with('product')->where('user_id', $user->id)->get();
+            if ($carts->isEmpty()) {
+                return response()->json([
+                    'message' => 'Your cart is empty.',
+                ], 400);
+            }
+            $order = DB::transaction(function () use ($carts, $user) {
                 $order = Order::create([
                     'user_id' => $user->id,
                     'status' => 'pending',
                     'total_price' => 0,
                 ]);
                 $totalPrice = 0;
-                foreach ($req_products as $req_product) {
-                    $product = Product::where('id', $req_product['id'])->first();
-                    $quantity = $req_product['quantity'];
-                    if ($product->stock < $quantity) {
-                        throw new \Exception(
-                            "The requested quantityis not available for product:{$product->name}"
-                        );
-                    }
+                foreach ($carts as $cart) {
+                    $product = $cart->product;
+                    $quantity = $cart->quantity;
+                    $price = $product->price * $quantity;
                     OrderItem::create([
                         'order_id' => $order->id,
                         'product_id' => $product->id,
                         'quantity' => $quantity,
-                        'price' => $product->price,
+                        'price' => $price,
                     ]);
-                    $totalPrice += $product->price * $quantity;
-                    $product->decrement('stock', $quantity);
+                    $totalPrice += $price;
                 }
                 $order->update(['total_price' => $totalPrice]);
+                Cart::where('user_id', $user->id)->delete();
                 return $order;
             });
             return response()->json([
                 'message' => 'Products processed successfully.',
-                'order' => $order
+                'order' => [
+                    'id' => $order->id,
+                    'status' => $order->status,
+                    'total_price' => $order->total_price,
+                    'created_at' => $order->created_at,
+                ],
             ], 201);
         } catch (ModelNotFoundException $e) {
             return response()->json([
-                'error' => 'Product not found',
+                'message' => 'A product in your cart was not found.',
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
@@ -99,14 +125,24 @@ class OrderController extends Controller
     public function cancelOrder($id)
     {
         try {
-            $order = Order::findOrFail($id);
+            $user = User::findOrFail(Auth::user()->id);
+            $order = Order::where('id', $id)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
             if (in_array($order->status, ['canceled', 'completed'])) {
                 return response()->json([
                     'message' => 'Cannot cancel this order.',
                 ], 400);
             }
-            $order->status = 'cancled';
-            $order->save();
+            DB::transaction(function () use ($order) {
+                foreach ($order->items as $item) {
+                    $product = Product::find($item->product_id);
+                    if ($product) {
+                        $product->increment('stock', $item->quantity);
+                    }
+                }
+                $order->update(['status' => 'cancelled']);
+            });
             return response()->json([
                 'message' => 'Order canceled successfully.',
             ], 200);

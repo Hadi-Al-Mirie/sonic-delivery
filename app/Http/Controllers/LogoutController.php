@@ -12,7 +12,7 @@ class LogoutController extends Controller
             $user = Auth::user();
             $user->currentAccessToken()->delete();
             return response()->json([
-                "message" => "logot done .",
+                "message" => "logout done .",
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

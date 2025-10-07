@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <title>Dashboard - @yield('title')</title>
+
+
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <meta name="description" content="Portal - Bootstrap 5 Admin Dashboard Template For Developers">
+        <meta name="author" content="Xiaoying Riley at 3rd Wave Media">
+        <link rel="shortcut icon" href="favicon.ico">
+
+        <script defer src="{{ asset('assets/plugins/fontawesome/js/all.min.js') }}"></script>
+
+        <link id="theme-style" rel="stylesheet" href="{{ asset('assets/css/portal.css') }}">
+
+
+
+    </head>
+
+    <style>
+        .btn-danger {
+            color: rgb(255, 60, 0);
+            border: 3px solid rgb(255, 60, 0);
+            background: transparent;
+        }
+
+        .btn-danger:hover {
+            color: white;
+        }
+
+        .btn-warning {
+            color: #EEBF41;
+            border: 3px solid #EEBF41;
+            background: transparent;
+        }
+
+        .btn-warning:hover {
+            color: white;
+        }
+
+        .btn-primary {
+            color: #0073ff;
+            border: 3px solid #0073ff;
+            background: transparent;
+        }
+
+        .btn-primary:hover {
+            color: white;
+            background: #0073ff;
+            border: 3px solid #0073ff;
+        }
+
+        .table-dark {
+            background: #343a40;
+            color: #fff;
+        }
+    </style>
+
+    <body class="app">
+
+
+        @include('dashboard.layouts.header')
+
+        <div class="app-wrapper">
+
+            <div class="app-content pt-3 p-md-3 p-lg-4">
+                <div class="container-xl">
+                    @yield('content')
+                </div>
+            </div>
+
+
+
+        </div>
+
+
+
+
+        <script src="{{ asset('assets/plugins/popper.min.js') }}"></script>
+        <script src="{{ asset('assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+
+        <script src="{{ asset('assets/plugins/chart.js/chart.min.js') }}"></script>
+        <script src="{{ asset('assets/js/index-charts.js') }}"></script>
+
+        <script src="{{ asset('assets/js/app.js') }}"></script>
+
+
+
+        @yield('script')
+
+    </body>
+
+</html>
