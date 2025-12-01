@@ -4,8 +4,8 @@
         <a href="#" id="sidepanel-close" class="sidepanel-close d-xl-none">&times;</a>
         <div class="app-branding">
             <a class="app-logo" href="index.html"><img class="logo-icon me-2"
-                    src="{{ asset('assets/images/app-logo.jpg') }}" alt="logo"><span
-                    class="logo-text">SonigDlivry</span></a>
+                    src="{{ asset('assets/images/app-logo.jpg') }}" alt="logo"><span class="logo-text">Sonic
+                    Delivery</span></a>
 
         </div>
 

@@ -3,89 +3,59 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Store;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\Store\StoreStoreRequest;
+use App\Http\Requests\Admin\Store\UpdateStoreRequest;
+use App\Services\Admin\StoreService;
 
 class StoreController extends Controller
 {
-    public function index()
+    public function index(StoreService $storeService)
     {
-        $stores = Store::orderBy('created_at', 'desc')->paginate(10);
+        $stores = $storeService->getStores();
 
         return view('dashboard.stores.index', compact('stores'));
     }
 
-    public function show($id)
+    public function show($id, StoreService $storeService)
     {
-        $store = Store::with('products')->findOrFail($id);
+        $store = $storeService->getStoreWithProducts($id);
+
         return view('dashboard.stores.show', compact('store'));
     }
-
 
     public function create()
     {
         return view('dashboard.stores.add');
     }
 
-    public function store(Request $request)
+    public function store(StoreStoreRequest $request, StoreService $storeService)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'location' => 'required|string',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
+        $storeService->createStore($request);
 
-        if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('store_logos', 'public');
-        }
-
-        Store::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'location' => $request->location,
-            'logo' => $logoPath ?? null,
-        ]);
-
-        return redirect()->route('admin.stores.index')->with('success', 'Store created successfully.');
+        return redirect()->route('admin.stores.index')
+            ->with('success', 'Store created successfully.');
     }
 
-    public function edit($id)
+    public function edit($id, StoreService $storeService)
     {
-        $store = Store::findOrFail($id);
+        $store = $storeService->getStoreById($id);
+
         return view('dashboard.stores.edit', compact('store'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateStoreRequest $request, $id, StoreService $storeService)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'location' => 'required|string',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
+        $storeService->updateStore($request, $id);
 
-        $store = Store::findOrFail($id);
-
-        if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('store_logos', 'public');
-        }
-
-        $store->update([
-            'name' => $request->name,
-            'description' => $request->description,
-            'location' => $request->location,
-            'logo' => isset($logoPath) ? $logoPath : $store->logo,
-        ]);
-
-        return redirect()->route('admin.stores.index')->with('success', 'Store updated successfully.');
+        return redirect()->route('admin.stores.index')
+            ->with('success', 'Store updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy($id, StoreService $storeService)
     {
-        $store = Store::findOrFail($id);
-        $store->delete();
+        $storeService->deleteStore($id);
 
-        return redirect()->route('admin.stores.index')->with('success', 'Store deleted successfully.');
+        return redirect()->route('admin.stores.index')
+            ->with('success', 'Store deleted successfully.');
     }
 }

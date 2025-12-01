@@ -16,9 +16,7 @@ class DashboardController extends Controller
         $orderCount = Order::count();
         $completedOrderCount = Order::where('status', 'completed')->count();
         $storeCount = Store::count();
-
-        $totalSales = Order::where('status', 'completed')->sum('total_price');  
-
+        $totalSales = Order::where('status', 'completed')->sum('total_price');
         return view('dashboard.index', compact(
             'userCount',
             'orderCount',

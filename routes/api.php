@@ -1,14 +1,14 @@
 <?php
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\FavoriteController;
-use App\Http\Controllers\LoginController;
-use App\Http\Controllers\LogoutController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\RegisterController;
-use App\Http\Controllers\SearchController;
-use App\Http\Controllers\StoreController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\Mobile\CartController;
+use App\Http\Controllers\Mobile\FavoriteController;
+use App\Http\Controllers\Mobile\LoginController;
+use App\Http\Controllers\Mobile\LogoutController;
+use App\Http\Controllers\Mobile\OrderController;
+use App\Http\Controllers\Mobile\ProductController;
+use App\Http\Controllers\Mobile\RegisterController;
+use App\Http\Controllers\Mobile\SearchController;
+use App\Http\Controllers\Mobile\StoreController;
+use App\Http\Controllers\Mobile\UserController;
 use Illuminate\Support\Facades\Route;
 
 

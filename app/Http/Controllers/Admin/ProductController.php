@@ -3,106 +3,49 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
-use App\Models\Store;
+use App\Http\Requests\Admin\Product\StoreProductRequest;
+use App\Http\Requests\Admin\Product\UpdateProductRequest;
+use App\Services\Admin\ProductService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, ProductService $productService)
     {
-        $query = Product::with('store')->orderBy('created_at', 'desc');
-
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->filled('store_id')) {
-            $query->where('store_id', $request->store_id);
-        }
-
-        $products = $query->paginate(10);
-
-        $stores = Store::all();
-
-        return view('dashboard.products.index', compact('products', 'stores'));
+        $data = $productService->getIndexData($request);
+        return view('dashboard.products.index', $data);
     }
 
-
-    public function create()
+    public function create(ProductService $productService)
     {
-        $stores = Store::all();
-        return view('dashboard.products.add', compact('stores'));
+        $data = $productService->getCreateData();
+        return view('dashboard.products.add', $data);
     }
 
-    public function store(Request $request)
+    public function store(StoreProductRequest $request, ProductService $productService)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'store_id' => 'required|exists:stores,id',
-        ]);
-
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('product_images', 'public');
-        }
-
-        Product::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'stock' => $request->stock,
-            'image' => $imagePath ?? null,
-            'store_id' => $request->store_id,
-        ]);
-
-        return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
+        $productService->createProduct($request);
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Product created successfully.');
     }
 
-    public function edit($id)
+    public function edit($id, ProductService $productService)
     {
-        $product = Product::findOrFail($id);
-        $stores = Store::all();
-        return view('dashboard.products.edit', compact('product', 'stores'));
+        $data = $productService->getEditData($id);
+        return view('dashboard.products.edit', $data);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateProductRequest $request, $id, ProductService $productService)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'store_id' => 'required|exists:stores,id',
-        ]);
-
-        $product = Product::findOrFail($id);
-
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('product_images', 'public');
-        }
-
-        $product->update([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'stock' => $request->stock,
-            'image' => isset($imagePath) ? $imagePath : $product->image,
-            'store_id' => $request->store_id,
-        ]);
-
-        return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
+        $productService->updateProduct($request, $id);
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Product updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy($id, ProductService $productService)
     {
-        $product = Product::findOrFail($id);
-        $product->delete();
-
-        return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
+        $productService->deleteProduct($id);
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Product deleted successfully.');
     }
 }
